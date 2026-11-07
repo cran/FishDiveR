@@ -37,10 +37,19 @@ utils::globalVariables(c(
   "VV_ms",
   "RenamedVariable",
   "Combined_tags",
+  "xmin",
+  "xmax",
   "ymin",
   "ymax",
   "scores",
   "data",
   "results",
-  "period_labs_factor"
+  "period_labs_factor",
+  "component",
+  "variance",
+  "cumulative",
+  "temp",
+  "group",
+  "percent",
+  "midpoint"
 ))

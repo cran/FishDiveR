@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+
+<title>Large, high-frequency records</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Large, high-frequency records</h1>
+
+
+
+<p>Modern tags can record depth every second for months. A year at
+1-second sampling is over 31 million records, and analysing it in full
+can need more memory than most computers have. This vignette explains
+where the memory goes, how to estimate it before running anything, and
+how to reduce it without losing the behaviour you are interested in.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">library</span>(FishDiveR)</span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a>example_folder <span class="ot">&lt;-</span> <span class="fu">system.file</span>(<span class="st">&quot;extdata&quot;</span>, <span class="at">package =</span> <span class="st">&quot;FishDiveR&quot;</span>)</span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a>archive_days <span class="ot">&lt;-</span> <span class="fu">readRDS</span>(<span class="fu">file.path</span>(example_folder, <span class="st">&quot;data&quot;</span>, <span class="st">&quot;archive_days.rds&quot;</span>))</span></code></pre></div>
+<div id="where-the-memory-goes" class="section level2">
+<h2>Where the memory goes</h2>
+<p>The wavelet analysis is the memory-heavy step. For every record and
+every period analysed, the wavelet stores a complex coefficient (16
+bytes) and the phase, amplitude, power and ridge (8 bytes each): about
+<strong>48 bytes per record per period</strong>.</p>
+<p>The number of periods depends only on the wavelet settings: the
+number of doublings between the lower and upper period, times the
+sub-octaves, plus one.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a>n_periods <span class="ot">&lt;-</span> <span class="cf">function</span>(lower_period_mins, upper_period_hours, <span class="at">suboctaves =</span> <span class="dv">12</span>) {</span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a>  <span class="fu">floor</span>(<span class="fu">log2</span>(upper_period_hours <span class="sc">*</span> <span class="dv">60</span> <span class="sc">/</span> lower_period_mins) <span class="sc">*</span> suboctaves) <span class="sc">+</span> <span class="dv">1</span></span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a>}</span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a>wavelet_gb <span class="ot">&lt;-</span> <span class="cf">function</span>(days, sampling_s, lower_period_mins, <span class="at">upper_period_hours =</span> <span class="dv">24</span>, <span class="at">suboctaves =</span> <span class="dv">12</span>) {</span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a>  records <span class="ot">&lt;-</span> days <span class="sc">*</span> <span class="dv">86400</span> <span class="sc">/</span> sampling_s</span>
+<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a>  records <span class="sc">*</span> <span class="fu">n_periods</span>(lower_period_mins, upper_period_hours, suboctaves) <span class="sc">*</span> <span class="dv">48</span> <span class="sc">/</span> <span class="dv">1024</span><span class="sc">^</span><span class="dv">3</span></span>
+<span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a>}</span>
+<span id="cb2-8"><a href="#cb2-8" tabindex="-1"></a></span>
+<span id="cb2-9"><a href="#cb2-9" tabindex="-1"></a><span class="co"># A 5 minute to 24 hour wavelet with 12 sub-octaves has this many periods</span></span>
+<span id="cb2-10"><a href="#cb2-10" tabindex="-1"></a><span class="fu">n_periods</span>(<span class="dv">5</span>, <span class="dv">24</span>)</span>
+<span id="cb2-11"><a href="#cb2-11" tabindex="-1"></a><span class="co">#&gt; [1] 99</span></span>
+<span id="cb2-12"><a href="#cb2-12" tabindex="-1"></a></span>
+<span id="cb2-13"><a href="#cb2-13" tabindex="-1"></a><span class="co"># Approximate wavelet memory in GB for a few deployments</span></span>
+<span id="cb2-14"><a href="#cb2-14" tabindex="-1"></a>deployments <span class="ot">&lt;-</span> <span class="fu">expand.grid</span>(<span class="at">days =</span> <span class="fu">c</span>(<span class="dv">30</span>, <span class="dv">90</span>, <span class="dv">365</span>), <span class="at">sampling_s =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">5</span>, <span class="dv">15</span>, <span class="dv">60</span>))</span>
+<span id="cb2-15"><a href="#cb2-15" tabindex="-1"></a>deployments<span class="sc">$</span>memory_GB <span class="ot">&lt;-</span> <span class="fu">round</span>(<span class="fu">wavelet_gb</span>(deployments<span class="sc">$</span>days, deployments<span class="sc">$</span>sampling_s, <span class="at">lower_period_mins =</span> <span class="dv">5</span>), <span class="dv">1</span>)</span>
+<span id="cb2-16"><a href="#cb2-16" tabindex="-1"></a>deployments</span>
+<span id="cb2-17"><a href="#cb2-17" tabindex="-1"></a><span class="co">#&gt;    days sampling_s memory_GB</span></span>
+<span id="cb2-18"><a href="#cb2-18" tabindex="-1"></a><span class="co">#&gt; 1    30          1      11.5</span></span>
+<span id="cb2-19"><a href="#cb2-19" tabindex="-1"></a><span class="co">#&gt; 2    90          1      34.4</span></span>
+<span id="cb2-20"><a href="#cb2-20" tabindex="-1"></a><span class="co">#&gt; 3   365          1     139.6</span></span>
+<span id="cb2-21"><a href="#cb2-21" tabindex="-1"></a><span class="co">#&gt; 4    30          5       2.3</span></span>
+<span id="cb2-22"><a href="#cb2-22" tabindex="-1"></a><span class="co">#&gt; 5    90          5       6.9</span></span>
+<span id="cb2-23"><a href="#cb2-23" tabindex="-1"></a><span class="co">#&gt; 6   365          5      27.9</span></span>
+<span id="cb2-24"><a href="#cb2-24" tabindex="-1"></a><span class="co">#&gt; 7    30         15       0.8</span></span>
+<span id="cb2-25"><a href="#cb2-25" tabindex="-1"></a><span class="co">#&gt; 8    90         15       2.3</span></span>
+<span id="cb2-26"><a href="#cb2-26" tabindex="-1"></a><span class="co">#&gt; 9   365         15       9.3</span></span>
+<span id="cb2-27"><a href="#cb2-27" tabindex="-1"></a><span class="co">#&gt; 10   30         60       0.2</span></span>
+<span id="cb2-28"><a href="#cb2-28" tabindex="-1"></a><span class="co">#&gt; 11   90         60       0.6</span></span>
+<span id="cb2-29"><a href="#cb2-29" tabindex="-1"></a><span class="co">#&gt; 12  365         60       2.3</span></span></code></pre></div>
+<p>R also needs working memory while the wavelet is calculated, so as a
+rule keep the estimate below about half of your computer’s memory. The
+app shows this estimate for each tag before running, and warns when it
+is too high.</p>
+<p>There are two ways to reduce it: a longer lower period (fewer
+periods), or a longer sampling interval (fewer records).</p>
+</div>
+<div id="a-longer-lower-period" class="section level2">
+<h2>A longer lower period</h2>
+<p>Each doubling of the lower period removes <code>suboctaves</code>
+periods. Going from 5 to 20 minutes removes 24 of the 99 periods, a
+quarter of the memory. This is only worthwhile if you don’t need cycles
+shorter than the new lower period, e.g. short dives.</p>
+</div>
+<div id="thinning-the-record" class="section level2">
+<h2>Thinning the record</h2>
+<p>Most of the records in a high-frequency record are not needed by the
+wavelet. The shortest cycle a record can show is twice its sampling
+interval, and a cycle is well described by about 20 records. A 5-minute
+cycle has 300 records at 1-second sampling, but only needs about 20.</p>
+<p><code>thin_archive()</code> averages the record into blocks of a
+longer interval. Averaging, rather than keeping every nth record, stops
+movements faster than the new interval from appearing as false, slower
+cycles (aliasing).</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="co"># The example tag is sampled every 60 seconds: thin it to 5 minutes</span></span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a>thinned <span class="ot">&lt;-</span> <span class="fu">thin_archive</span>(archive_days, <span class="at">interval_s =</span> <span class="dv">300</span>, <span class="at">verbose =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a><span class="co">#&gt; Thinned from 60 to 300 second sampling: 14,400 to 2,880 records</span></span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a><span class="fu">head</span>(thinned[, <span class="fu">c</span>(<span class="st">&quot;date&quot;</span>, <span class="st">&quot;depth&quot;</span>, <span class="st">&quot;date_only&quot;</span>)])</span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a><span class="co">#&gt;                   date depth  date_only</span></span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a><span class="co">#&gt;                 &lt;POSc&gt; &lt;num&gt;     &lt;Date&gt;</span></span>
+<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a><span class="co">#&gt; 1: 2000-01-01 00:00:00 12.14 2000-01-01</span></span>
+<span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a><span class="co">#&gt; 2: 2000-01-01 00:05:00 12.68 2000-01-01</span></span>
+<span id="cb3-9"><a href="#cb3-9" tabindex="-1"></a><span class="co">#&gt; 3: 2000-01-01 00:10:00 15.10 2000-01-01</span></span>
+<span id="cb3-10"><a href="#cb3-10" tabindex="-1"></a><span class="co">#&gt; 4: 2000-01-01 00:15:00 10.44 2000-01-01</span></span>
+<span id="cb3-11"><a href="#cb3-11" tabindex="-1"></a><span class="co">#&gt; 5: 2000-01-01 00:20:00 11.94 2000-01-01</span></span>
+<span id="cb3-12"><a href="#cb3-12" tabindex="-1"></a><span class="co">#&gt; 6: 2000-01-01 00:25:00 11.70 2000-01-01</span></span></code></pre></div>
+<p>Depth (and temperature, if present) is averaged over each block. Any
+other columns keep the value of the block’s first record.</p>
+<p>The interval must be a multiple of the current sampling interval and
+divide a day evenly, so that days stay whole: for example 5, 10, 15, 30,
+60, 120 or 300 seconds.</p>
+<div id="choosing-the-interval" class="section level3">
+<h3>Choosing the interval</h3>
+<p>Keep at least 20 records per cycle of the wavelet’s lower period:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a>lower_period_mins <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">5</span>, <span class="dv">10</span>, <span class="dv">20</span>, <span class="dv">30</span>, <span class="dv">60</span>)</span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a><span class="fu">data.frame</span>(lower_period_mins, <span class="at">longest_interval_s =</span> lower_period_mins <span class="sc">*</span> <span class="dv">60</span> <span class="sc">/</span> <span class="dv">20</span>)</span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a><span class="co">#&gt;   lower_period_mins longest_interval_s</span></span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a><span class="co">#&gt; 1                 5                 15</span></span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a><span class="co">#&gt; 2                10                 30</span></span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a><span class="co">#&gt; 3                20                 60</span></span>
+<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a><span class="co">#&gt; 4                30                 90</span></span>
+<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a><span class="co">#&gt; 5                60                180</span></span></code></pre></div>
+<p>So for a 5-minute lower period, thin to 15 seconds or less. A 30-day
+record at 1-second sampling then needs under 1 GB instead of about 11
+GB:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="fu">round</span>(<span class="fu">c</span>(<span class="at">full =</span> <span class="fu">wavelet_gb</span>(<span class="dv">30</span>, <span class="dv">1</span>, <span class="dv">5</span>), <span class="at">thinned =</span> <span class="fu">wavelet_gb</span>(<span class="dv">30</span>, <span class="dv">15</span>, <span class="dv">5</span>)), <span class="dv">1</span>)</span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a><span class="co">#&gt;    full thinned </span></span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a><span class="co">#&gt;    11.5     0.8</span></span></code></pre></div>
+<p>The app suggests an interval following this rule.</p>
+</div>
+<div id="using-the-thinned-record" class="section level3">
+<h3>Using the thinned record</h3>
+<p>Give the thinned record to <code>create_wavelet()</code>, but keep
+the full record for the depth statistics: averaging slightly reduces
+maximum depths and vertical speeds.</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a>archive_days <span class="ot">&lt;-</span> <span class="fu">readRDS</span>(<span class="fu">file.path</span>(project, <span class="st">&quot;237522&quot;</span>, <span class="st">&quot;archive_days.rds&quot;</span>))</span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a></span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a><span class="co"># Wavelet from the thinned record</span></span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a>wavelet <span class="ot">&lt;-</span> <span class="fu">create_wavelet</span>(</span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a>  <span class="at">archive =</span> <span class="fu">thin_archive</span>(archive_days, <span class="at">interval_s =</span> <span class="dv">15</span>),</span>
+<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a>  <span class="at">tag_ID =</span> <span class="st">&quot;237522&quot;</span>,</span>
+<span id="cb6-7"><a href="#cb6-7" tabindex="-1"></a>  <span class="at">lower_period_mins =</span> <span class="dv">5</span>,</span>
+<span id="cb6-8"><a href="#cb6-8" tabindex="-1"></a>  <span class="at">upper_period_hours =</span> <span class="dv">24</span>,</span>
+<span id="cb6-9"><a href="#cb6-9" tabindex="-1"></a>  <span class="at">output =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb6-10"><a href="#cb6-10" tabindex="-1"></a>  <span class="at">output_folder =</span> project</span>
+<span id="cb6-11"><a href="#cb6-11" tabindex="-1"></a>)</span>
+<span id="cb6-12"><a href="#cb6-12" tabindex="-1"></a><span class="fu">create_wavelet_stats</span>(wavelet, <span class="at">tag_ID =</span> <span class="st">&quot;237522&quot;</span>, <span class="at">output =</span> <span class="cn">TRUE</span>, <span class="at">output_folder =</span> project)</span>
+<span id="cb6-13"><a href="#cb6-13" tabindex="-1"></a></span>
+<span id="cb6-14"><a href="#cb6-14" tabindex="-1"></a><span class="co"># Depth statistics from the full record</span></span>
+<span id="cb6-15"><a href="#cb6-15" tabindex="-1"></a><span class="fu">create_depth_stats</span>(archive_days, <span class="at">tag_ID =</span> <span class="st">&quot;237522&quot;</span>, <span class="at">diel =</span> <span class="cn">TRUE</span>, <span class="at">GPS =</span> gps_file, <span class="at">output =</span> <span class="cn">TRUE</span>, <span class="at">output_folder =</span> project)</span></code></pre></div>
+<p><code>create_wavelet()</code> records the sampling interval it was
+given in the tag’s <code>wavelet_meta.rds</code>, and
+<code>create_wavelet_stats()</code> uses the wavelet’s own interval to
+split it into days.</p>
+</div>
+<div id="keep-tags-consistent" class="section level3">
+<h3>Keep tags consistent</h3>
+<p>Wavelet statistics from a thinned record are very close to, but not
+the same as, those from the full record. Thin all the tags you will
+cluster together to the same interval. This also makes tags recorded at
+different rates directly comparable: a 1-second tag and a 15-second tag
+both thinned to 15 seconds give comparable statistics.</p>
+</div>
+</div>
+<div id="plotting-large-records" class="section level2">
+<h2>Plotting large records</h2>
+<p>Plotting millions of points is slow, and a figure a thousand pixels
+wide can’t show them anyway. <code>plot_TDR()</code> and
+<code>plot_cluster_TDR()</code> have a <code>minmax_bins</code> option
+that plots only the shallowest and deepest record in each of that many
+time slices. With 2,000 slices, a year at 5-second sampling plots in
+about a second, and every dive’s extremes are kept, unlike plotting
+every nth record.</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a>tdr <span class="ot">&lt;-</span> <span class="fu">plot_TDR</span>(</span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>  <span class="at">rds_file =</span> <span class="st">&quot;data/archive_days.rds&quot;</span>,</span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a>  <span class="at">data_folder =</span> example_folder,</span>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a>  <span class="at">minmax_bins =</span> <span class="dv">500</span>,</span>
+<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a>  <span class="at">Y_lim =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">300</span>, <span class="dv">50</span>),</span>
+<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a>  <span class="at">date_breaks =</span> <span class="st">&quot;2 day&quot;</span></span>
+<span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a>)</span>
+<span id="cb7-8"><a href="#cb7-8" tabindex="-1"></a><span class="fu">nrow</span>(tdr)</span>
+<span id="cb7-9"><a href="#cb7-9" tabindex="-1"></a><span class="co">#&gt; [1] 1000</span></span>
+<span id="cb7-10"><a href="#cb7-10" tabindex="-1"></a><span class="fu">attr</span>(tdr, <span class="st">&quot;TDR_plot&quot;</span>)</span></code></pre></div>
+<p><img role="img" aria-label="Depth record of the example tag plotted with the shallowest and deepest record in each of 500 time slices." src="data:image/png;base64,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" alt="Depth record of the example tag plotted with the shallowest and deepest record in each of 500 time slices." width="100%" /></p>
+<p>The wavelet power spectrum figure made by
+<code>create_wavelet()</code> is thinned for drawing in the same spirit,
+so long records are drawn in full; the saved wavelet itself is not
+changed. To redraw a tag’s figures from its saved wavelet without
+recalculating it, use <code>load_existing_wavelet = TRUE</code>:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="fu">create_wavelet</span>(</span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a>  <span class="at">archive =</span> archive_days,</span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a>  <span class="at">tag_ID =</span> <span class="st">&quot;237522&quot;</span>,</span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a>  <span class="at">load_existing_wavelet =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a>  <span class="at">lower_period_mins =</span> <span class="dv">5</span>,</span>
+<span id="cb8-6"><a href="#cb8-6" tabindex="-1"></a>  <span class="at">upper_period_hours =</span> <span class="dv">24</span>,</span>
+<span id="cb8-7"><a href="#cb8-7" tabindex="-1"></a>  <span class="at">output =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb8-8"><a href="#cb8-8" tabindex="-1"></a>  <span class="at">output_folder =</span> project</span>
+<span id="cb8-9"><a href="#cb8-9" tabindex="-1"></a>)</span></code></pre></div>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

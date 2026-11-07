@@ -25,8 +25,6 @@
 #'   to investigate daily diving behaviour. Defaults to 24.
 #' @param sampling_frequency Sampling frequency of depth data in seconds. Defaults
 #'   to time between first and second depth record. Recommended to leave blank.
-#' @param allow_irregular_sampling Allows irregular sampling interval in the
-#'   dataset. Not recommended. Defaults to FALSE.
 #' @param load_existing_wavelet Load an existing my.w wavelet object from the
 #'   output_folder. Defaults to FALSE.
 #' @param suboctaves number of suboctaves between each logarithmic period. E.g.
@@ -66,7 +64,6 @@
 #'   tag_ID = "data",
 #'   wv_period_hours = 24,
 #'   sampling_frequency = NULL,
-#'   allow_irregular_sampling = FALSE,
 #'   load_existing_wavelet = FALSE,
 #'   suboctaves = 12,
 #'   lower_period_mins = 30,
@@ -87,7 +84,6 @@ create_wavelet <- function(archive,
                            tag_ID,
                            wv_period_hours = 24,
                            sampling_frequency = NULL,
-                           allow_irregular_sampling = FALSE,
                            load_existing_wavelet = FALSE,
                            suboctaves = 12,
                            lower_period_mins = 5,
@@ -180,9 +176,6 @@ create_wavelet <- function(archive,
   if (isTRUE(output) && is.null(output_folder)) {
     stop("When output = TRUE, output_folder must be provided.")
   }
-  if (!is.logical(allow_irregular_sampling)) {
-    stop("allow_irregular_sampling must be TRUE or FALSE.")
-  }
   if (!is.logical(plot_wavelet)) {
     stop("plot_wavelet must be TRUE or FALSE.")
   }
@@ -224,10 +217,6 @@ create_wavelet <- function(archive,
           collapse = "; "
         )
         message("Sampling frequency is not constant. Intervals detected: ", msg)
-      }
-
-      if (!isTRUE(allow_irregular_sampling)) {
-        stop("Sampling frequency is not constant and allow_irregular_sampling is FALSE.", call. = FALSE)
       }
     }
 
@@ -316,6 +305,10 @@ create_wavelet <- function(archive,
       # Load the existing wavelet
       if (verbose) message("\nLoading existing wavelet.")
       my.w <- readRDS(file = wavelet_file_path)
+
+      # Use the wavelet's own sampling interval, which differs from archive's
+      # if the record was thinned before the wavelet was made
+      sampling_frequency <- as.numeric(difftime(my.w$series[2, 1], my.w$series[1, 1], units = "secs"))
     } else {
       stop("Wavelet was not found in output_folder")
     }
@@ -354,7 +347,7 @@ create_wavelet <- function(archive,
   }
 
   # Combine the attributes into a list
-  wavelet_meta <- list(LP = attr(my.w, "LP"), UP = attr(my.w, "UP"), SO = attr(my.w, "SO"))
+  wavelet_meta <- list(LP = attr(my.w, "LP"), UP = attr(my.w, "UP"), SO = attr(my.w, "SO"), sampling_s = sampling_frequency)
 
   if (isTRUE(output)) {
     # Save the list as an RDS file
@@ -419,6 +412,20 @@ create_wavelet <- function(archive,
       at_points <- head(at_points, -1)
     }
 
+    # Thin long records for plotting. Drawing a raster image with millions of
+    # columns silently cuts off the end of the spectrum, so keep at most 10
+    # columns per pixel of plot width, at the even step image() requires. The
+    # time axis is drawn from my.w$nc, so it is unchanged.
+    plot_w <- my.w
+    plot_step <- ceiling(my.w$nc / (plot_width * 10))
+    if (plot_step > 1) {
+      plot_cols <- seq(1, my.w$nc, by = plot_step)
+      plot_w$Power <- my.w$Power[, plot_cols, drop = FALSE]
+      plot_w$axis.1 <- my.w$axis.1[plot_cols]
+      if (!is.null(my.w$Power.pval)) plot_w$Power.pval <- my.w$Power.pval[, plot_cols, drop = FALSE]
+      if (!is.null(my.w$Ridge)) plot_w$Ridge <- my.w$Ridge[, plot_cols, drop = FALSE]
+    }
+
     # Create the directory if it doesn't exist
     dir.create(file.path(output_folder, tag_ID, "2_Wavelet_Figures"), recursive = TRUE, showWarnings = FALSE)
 
@@ -444,7 +451,7 @@ create_wavelet <- function(archive,
           label_digits <- 0
         }
 
-        WaveletComp::wt.image(my.w,
+        WaveletComp::wt.image(plot_w,
           plot.coi = FALSE,
           plot.ridge = FALSE, # No ridge (p-value significance) will be plotted
           color.key = "quantile",

@@ -72,3 +72,70 @@ test_that("process_tag_data() imports a tag archive", {
   expected_filepath <- file.path(tempdir(), "data", "tag_archive.png")
   expect_true(file.exists(expected_filepath))
 })
+
+test_that("plot_TDR() minmax_bins keeps the shallowest and deepest records", {
+  filepath <- system.file("extdata", package = "FishDiveR")
+  archive_days <- readRDS(file.path(filepath, "data/archive_days.rds"))
+
+  plot_data <- plot_TDR(
+    rds_file = "data/archive_days.rds",
+    data_folder = filepath,
+    Y_lim = c(0, 300, 50),
+    date_breaks = "48 hour",
+    minmax_bins = 100
+  )
+
+  expect_lte(nrow(plot_data), 200)
+  expect_equal(max(plot_data$depth), max(archive_days$depth))
+  expect_equal(min(plot_data$depth), min(archive_days$depth))
+  expect_false(is.unsorted(plot_data$date))
+  expect_s3_class(attr(plot_data, "TDR_plot"), "ggplot")
+
+  expect_error(plot_TDR("data/archive_days.rds", data_folder = filepath, minmax_bins = -1), "minmax_bins")
+})
+
+test_that("import_tag_data() warns on irregular sampling intervals", {
+  archive_file <- system.file("extdata", "data/data-Archive.csv", package = "FishDiveR")
+
+  import_args <- list(
+    tag_ID = "data",
+    tag_deploy_UTC = "2000-01-01 00:00:00",
+    tag_release_UTC = "2000-01-11 23:59:00",
+    archive = archive_file,
+    time_zone = "UTC",
+    verbose = FALSE
+  )
+
+  # Example data has a constant 60 s interval
+  expect_no_warning(do.call(import_tag_data, import_args))
+
+  # Remove records to create a gap in the time-series
+  irregular_file <- file.path(tempdir(), "irregular-Archive.csv")
+  archive <- utils::read.csv(archive_file)
+  utils::write.csv(archive[-(5000:5004), ], irregular_file, row.names = FALSE)
+
+  import_args$archive <- irregular_file
+  expect_warning(
+    do.call(import_tag_data, import_args),
+    "Sampling frequency is not constant. Intervals detected: 60s: .* records; 360s: 1 records"
+  )
+})
+
+test_that("import_tag_data() reports temperatures when imported", {
+  temp_file <- file.path(tempdir(), "temp-log-Archive.csv")
+  archive <- utils::read.csv(system.file("extdata", "data/data-Archive.csv", package = "FishDiveR"))
+  archive$temp <- 20 + archive$depth / 100
+  archive$temp[3] <- NA
+  utils::write.csv(archive, temp_file, row.names = FALSE)
+
+  import <- function() {
+    import_tag_data(
+      tag_ID = "data", tag_deploy_UTC = "2000-01-01 00:00:00", tag_release_UTC = "2000-01-11 23:59:00",
+      archive = temp_file, temp_col = 3, time_zone = "UTC", verbose = TRUE
+    )
+  }
+  messages <- paste(capture_messages(archive_days <- import()), collapse = "")
+  expect_match(messages, "Mean temperature = [0-9.]+ Minimum = 20 Maximum = 22.6")
+  expect_match(messages, "Records with no temperature: 1")
+  expect_true("temp" %in% names(archive_days))
+})
